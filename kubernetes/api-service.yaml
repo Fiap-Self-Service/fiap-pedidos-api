@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fiap-clientes-api-service
+  namespace: fiap-clientes-api
+
+spec:
+  type: LoadBalancer
+  selector:
+    app: fiap-clientes-api
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000

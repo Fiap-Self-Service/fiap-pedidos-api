@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiap-clientes-api-config
+  namespace: fiap-clientes-api
+  labels:
+    name: fiap-clientes-api-config
+data:
+  DATABASE_HOST: "terraform-20241120192055796800000001.c1pqiiycvnmd.us-east-1.rds.amazonaws.com"
+  DATABASE_PORT: "3306"
+  DATABASE_DATABASE: "clientes"
+  APPLICATION_PORT: "3000"

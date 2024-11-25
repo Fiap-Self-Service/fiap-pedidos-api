@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+
+  fiap-pedidos-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks: 
+      - fiap-pedidos-api-net
+    restart: always
+    depends_on:
+      - fiap-pedidos-api-db-mysql
+    ports:
+      - 3000:3000
+    environment:
+      DATABASE_HOST: fiap-pedidos-api-db-mysql
+      DATABASE_PORT: 3306
+      DATABASE_USERNAME: fiap
+      DATABASE_PASSWORD: fiap
+      DATABASE_DATABASE: fiap-pedidos
+
+  fiap-pedidos-api-db-mysql:
+    image: mysql:8.0
+    restart: always
+    networks: 
+      - fiap-pedidos-api-net
+    volumes:
+      - mysql_data_fiap_pedidos:/var/lib/mysql
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fiap-pedidos
+      MYSQL_USER: fiap
+      MYSQL_PASSWORD: fiap
+
+volumes:
+  mysql_data_fiap_pedidos: {}
+
+networks:
+  fiap-pedidos-api-net:
+    driver: bridge

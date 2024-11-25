@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fiap-clientes-api-deployment
+  namespace: fiap-clientes-api
+  labels:
+    app: fiap-clientes-api
+spec:
+  template:
+    metadata:
+      name: fiap-clientes-api-deployment
+      labels:
+        app: fiap-clientes-api-deployment
+    spec:
+      containers:
+        - name: fiap-clientes-api-deployment-container
+          image: jacksoncarbonera/fiap-clientes-api
+          ports:
+            - containerPort: 3000
+          envFrom:
+          - configMapRef:
+              name: fiap-clientes-api-config 
+          - secretRef:
+             name: fiap-clientes-api-secret
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            periodSeconds: 10
+            failureThreshold: 3
+            initialDelaySeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            periodSeconds: 10
+            failureThreshold: 5
+            initialDelaySeconds: 3
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "100Mi"
+            requests:
+              cpu: "50m"
+              memory: "50Mi"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fiap-clientes-api-deployment
