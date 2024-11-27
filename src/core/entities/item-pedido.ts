@@ -17,18 +17,17 @@ export class ItemPedido {
     quantidade: number,
     valor: number
   ) {
-    if (idPedido == null) {
-      throw new HttpException("Pedido inválido", HttpStatus.BAD_REQUEST);
+    if (!idPedido || idPedido.trim() === '') 
+    {
+      throw new HttpException('Pedido inválido', HttpStatus.BAD_REQUEST);
     }
-
-    if (idProduto == null) {
-      throw new HttpException("Produto inválido", HttpStatus.BAD_REQUEST);
+    if (!idProduto || idProduto.trim() === '') 
+    {
+      throw new HttpException('Produto inválido', HttpStatus.BAD_REQUEST);
     }
-
     if (quantidade <= 0) {
       throw new HttpException("Quantidade inválida", HttpStatus.BAD_REQUEST);
     }
-
     if (valor <= 0) {
       throw new HttpException("Valor inválido", HttpStatus.BAD_REQUEST);
     }

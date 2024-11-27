@@ -3,21 +3,35 @@ import { ListarPedidoUseCase } from '../use-cases/listar-pedido-use-case';
 import { PedidoGateway } from '../adapters/gateways/pedido-gateway';
 import { Pedido } from '../entities/pedido';
 import { ItemPedido } from '../entities/item-pedido';
+import { IPedidoRepository } from '../external/repository/pedido-repository.interface';
+import { IPedidoCacheRepository } from '../external/repository/pedido-cache-repository.interface';
+
+jest.mock('../adapters/gateways/pedido-gateway');
 
 describe('ListarPedidoUseCase', () => {
   let listarPedidoUseCase: ListarPedidoUseCase;
-  let pedidoGateway: PedidoGateway;
+  let pedidoGateway: jest.Mocked<PedidoGateway>;
+  let pedidoRepositoryMock: jest.Mock;
+  let pedidoCacheRepositoryMock: jest.Mock;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ListarPedidoUseCase,
-        PedidoGateway
+        PedidoGateway,
+        {
+          provide: IPedidoRepository, // Mock do IPedidoRepository
+          useValue: pedidoRepositoryMock,
+        },
+        {
+          provide: IPedidoCacheRepository, // Mock do IPedidoCacheRepository
+          useValue: pedidoCacheRepositoryMock,
+        },
       ],
     }).compile();
 
     listarPedidoUseCase = module.get<ListarPedidoUseCase>(ListarPedidoUseCase);
-    pedidoGateway = module.get<PedidoGateway>('PedidoGateway');
+    pedidoGateway = module.get<jest.Mocked<PedidoGateway>>(PedidoGateway);
   });
 
   describe('execute', () => {

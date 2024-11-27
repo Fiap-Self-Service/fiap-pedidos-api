@@ -10,7 +10,7 @@ export class AtualizarStatusPedidoUseCase {
     pedidoGateway: PedidoGateway,
     id: string,
     atualizarStatusPedidoDTO: AtualizarPedidoDTO
-  ): Promise<Pedido> {
+  ): Promise<Pedido> {  
     const pedido = await pedidoGateway.buscarPorIdPedido(id);
 
     if (!pedido) {

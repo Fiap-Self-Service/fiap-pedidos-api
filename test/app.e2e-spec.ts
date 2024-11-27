@@ -1,77 +1,69 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { HttpStatus, INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
-
-const PEDIDO1 = {
-  idPagamento: 'pagamento123',
-  idCliente: 'cliente1',
-  combo: [
-    {
-      idProduto: 'produto1',
-      quantidade: 2,
-      valor: 100,
-    },
-    {
-      idProduto: 'produto2',
-      quantidade: 1,
-      valor: 50,
-    },
-  ],
-};
-
-const PEDIDO_STATUS_UPDATE = {
-  status: 'PREPARACAO',
-};
+import { AppModule } from './../src/app.module';  // Ajuste o caminho conforme necessário
+import { PedidoDTO } from './../src/core/dto/pedidoDTO';
+import { ItemPedidoDTO } from './../src/core/dto/itemPedidoDTO';
 
 describe('Testes de Integração de Pedido', () => {
   let app: INestApplication;
   let pedidoId: string;
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule]
+  const ITEM_PEDIDO1 = {
+    idProduto: 'produto1',
+    quantidade: 1,
+    valor: 100.0,
+  };
+
+  const PEDIDO1 = {
+    valorTotal: 100.0,
+    dataCriacao: new Date(),
+    combo: [ITEM_PEDIDO1],
+  };
+
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleRef.createNestApplication();
     await app.init();
   });
 
   it('Deve cadastrar um pedido', async () => {
     const response = await request(app.getHttpServer())
-      .post('/pedidos')
+      .post('/pedidos')  // Verifique a rota correta
       .send(PEDIDO1)
       .expect(HttpStatus.CREATED);
 
     pedidoId = response.body.id; // Armazena o ID do pedido criado
     expect(response.body.id).toBeDefined();
+    expect(response.body.status).toBe('RECEBIDO');
+    expect(response.body.valorTotal).toBe(100.0);
+    expect(response.body.combo.length).toBe(1);  // Verifica que o combo foi passado corretamente
   });
 
   it('Deve atualizar o status do pedido', async () => {
-    await request(app.getHttpServer())
-      .post('/pedidos')
-      .send(PEDIDO1)
-      .expect(HttpStatus.CREATED);
+    const novoStatus = { status: 'PREPARACAO' };
 
-    return await request(app.getHttpServer())
-      .patch(`/pedidos/${pedidoId}/status`)
-      .send(PEDIDO_STATUS_UPDATE)
-      .expect(HttpStatus.OK)
-      .then(response => {
-        expect(response.body.status).toBe(PEDIDO_STATUS_UPDATE.status);
-      });
+    const response = await request(app.getHttpServer())
+      .patch(`/pedidos/${pedidoId}`)
+      .send(novoStatus)
+      .expect(HttpStatus.OK);  // Espera 201 para confirmação de que a atualização foi bem-sucedida
+
+    expect(response.body.status).toBe('PREPARACAO');
   });
 
   it('Deve consultar o pedido pelo ID', async () => {
-    await request(app.getHttpServer()).post('/pedidos').send(PEDIDO1);
-
-    return await request(app.getHttpServer())
+    const response = await request(app.getHttpServer())
       .get(`/pedidos/${pedidoId}`)
-      .send()
-      .expect(HttpStatus.OK)
-      .then(response => {
-        expect(response.body.id).toBe(pedidoId);
-        expect(response.body.status).toBe('RECEBIDO'); // Status inicial
-      });
+      .expect(HttpStatus.OK);
+
+    expect(response.body.id).toBe(pedidoId);
+    expect(response.body.status).toBe('PREPARACAO'); // Status atualizado
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 });

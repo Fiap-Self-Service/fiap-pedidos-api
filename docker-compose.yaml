@@ -19,6 +19,20 @@ services:
       DATABASE_USERNAME: fiap
       DATABASE_PASSWORD: fiap
       DATABASE_DATABASE: fiap-pedidos
+      MYSQL_BIND_ADDRESS: 0.0.0.0
+
+  fiap-pedidos-api-dynamodb:
+      image: amazon/dynamodb-local
+      container_name: dynamodb-local
+      ports:
+        - "8000:8000"
+      volumes:
+        - dynamodb_data:/home/dynamodblocal/data
+      environment:
+        - AWS_REGION=us-east-1
+        - AWS_ACCESS_KEY_ID=dummy
+        - AWS_SECRET_ACCESS_KEY=dummy
+        - JAVA_TOOL_OPTIONS=-Xmx2048m -Xms2048m
 
   fiap-pedidos-api-db-mysql:
     image: mysql:8.0
@@ -37,6 +51,7 @@ services:
 
 volumes:
   mysql_data_fiap_pedidos: {}
+  dynamodb_data: {}
 
 networks:
   fiap-pedidos-api-net:

@@ -4,13 +4,28 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { Pedido } from '../entities/pedido';
 import { ItemPedido } from '../entities/item-pedido';
 import { PedidoGateway } from '../adapters/gateways/pedido-gateway';
-import { clienteGatewayMock, produtoGatewayMock, intencaoPagamentoGatewayMock, cadastrarIntencaoPagamentoUseCaseMock, pagamentoClientMock } from './use-case-mocks';
+import { IPedidoRepository } from '../external/repository/pedido-repository.interface';
+import { IPedidoCacheRepository } from '../external/repository/pedido-cache-repository.interface';
+import {
+  clienteGatewayMock,
+  produtoGatewayMock,
+  intencaoPagamentoGatewayMock,
+  cadastrarIntencaoPagamentoUseCaseMock,
+  pagamentoClientMock,
+} from './use-case-mocks';
+
+jest.mock('../adapters/gateways/pedido-gateway');
 
 describe('CadastrarPedidoUseCase', () => {
   let cadastrarPedidoUseCase: CadastrarPedidoUseCase;
-  let pedidoGateway: PedidoGateway;
+  let pedidoGateway: jest.Mocked<PedidoGateway>;
+  let pedidoRepositoryMock: jest.Mock;
+  let pedidoCacheRepositoryMock: jest.Mock;
 
   beforeEach(async () => {
+    pedidoRepositoryMock = jest.fn();
+    pedidoCacheRepositoryMock = jest.fn();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CadastrarPedidoUseCase,
@@ -35,67 +50,101 @@ describe('CadastrarPedidoUseCase', () => {
           provide: 'PagamentoClient',
           useValue: pagamentoClientMock,
         },
+        {
+          provide: IPedidoRepository,
+          useValue: pedidoRepositoryMock,
+        },
+        {
+          provide: IPedidoCacheRepository,
+          useValue: pedidoCacheRepositoryMock,
+        },
       ],
     }).compile();
 
     cadastrarPedidoUseCase = module.get<CadastrarPedidoUseCase>(CadastrarPedidoUseCase);
-    pedidoGateway = module.get<PedidoGateway>(PedidoGateway);
+
+    // Configura o mock para PedidoGateway
+    pedidoGateway = module.get<PedidoGateway>(PedidoGateway) as jest.Mocked<PedidoGateway>;
+
+    // Mock explícito dos métodos de PedidoGateway
+    pedidoGateway.salvarPedido = jest.fn();
+    pedidoGateway.adicionarPedidoCache = jest.fn();
   });
 
   describe('execute', () => {
     it('Deve lançar uma exceção se o cliente não for encontrado', async () => {
-      const pedido = new Pedido('cliente123', [], 'intencaoPagamento123');
-      clienteGatewayMock.adquirirPorID.mockResolvedValue(null); // Cliente não encontrado
+      const pedido = new Pedido('cliente123', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+      ], 'intencaoPagamento123');
 
-      await expect(cadastrarPedidoUseCase.execute(
-        clienteGatewayMock,
-        produtoGatewayMock,
-        intencaoPagamentoGatewayMock,
-        pagamentoClientMock,
-        cadastrarIntencaoPagamentoUseCaseMock,
-        pedidoGateway,
-        pedido
-      )).rejects.toThrowError(new HttpException('Cliente não encontrado.', HttpStatus.BAD_REQUEST));
+      (clienteGatewayMock.adquirirPorID as jest.Mock).mockResolvedValue(null);
+
+      await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGateway)).rejects.toThrowError(
+        new HttpException('Cliente não encontrado.', HttpStatus.BAD_REQUEST),
+      );
     });
 
     it('Deve lançar uma exceção se o combo de produtos estiver vazio', async () => {
-      const pedido = new Pedido('cliente123', [], 'intencaoPagamento123');
-      await expect(cadastrarPedidoUseCase.execute(
-        clienteGatewayMock,
-        produtoGatewayMock,
-        intencaoPagamentoGatewayMock,
-        pagamentoClientMock,
-        cadastrarIntencaoPagamentoUseCaseMock,
-        pedidoGateway,
-        pedido
-      )).rejects.toThrowError(new HttpException('Combo de produtos não pode estar vazio', HttpStatus.BAD_REQUEST));
+      const pedido = {
+        id: 'pedido123',
+        idCliente: 'cliente123',
+        combo: [],
+        idIntencaoPagamento: 'intencaoPagamento123',
+        idPagamento: null,
+        valorTotal: 0,
+        dataCriacao: new Date(),
+        status: 'PENDENTE',
+      } as unknown as Pedido;
+
+      await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGateway)).rejects.toThrowError(
+        new HttpException('Combo de produtos não pode estar vazio', HttpStatus.BAD_REQUEST),
+      );
     });
 
-    it('Deve salvar o pedido e adicionar ao cache', async () => {
-      const pedido = new Pedido('cliente123', [
-        { idProduto: 'produto1', quantidade: 2, valor: 100 } as ItemPedido
-      ], 'intencaoPagamento123');
-      clienteGatewayMock.adquirirPorID.mockResolvedValue({ id: 'cliente123' }); // Cliente válido
+    it('Deve lançar uma exceção se algum produto do combo não for encontrado', async () => {
+      const pedido = new Pedido('cliente123', [{ idProduto: 'produto1', quantidade: 2, valor: 100 } as ItemPedido], 'intencaoPagamento123');
 
-      // Mockando a resposta do produto
-      produtoGatewayMock.buscarProdutoPorID.mockResolvedValue({ id: 'produto1', valor: 100 });
+      (clienteGatewayMock.adquirirPorID as jest.Mock).mockResolvedValue({ id: 'cliente123' });
+      (produtoGatewayMock.buscarProdutoPorID as jest.Mock).mockResolvedValue(null);
 
-      // Mock de sucesso para o método de intenção de pagamento
-      cadastrarIntencaoPagamentoUseCaseMock.execute.mockResolvedValue({ id: 'intencaoPagamento123' });
-
-      const resultado = await cadastrarPedidoUseCase.execute(
-        clienteGatewayMock,
-        produtoGatewayMock,
-        intencaoPagamentoGatewayMock,
-        pagamentoClientMock,
-        cadastrarIntencaoPagamentoUseCaseMock,
-        pedidoGateway,
-        pedido
+      await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGateway)).rejects.toThrowError(
+        new HttpException('Ops... o produto produto1 não foi encontrado.', HttpStatus.BAD_REQUEST),
       );
+    });
+
+    it('Deve lançar uma exceção se falhar ao criar a intenção de pagamento', async () => {
+      const pedido = new Pedido('cliente123', [{ idProduto: 'produto1', quantidade: 2, valor: 100 } as ItemPedido], 'intencaoPagamento123');
+
+      (clienteGatewayMock.adquirirPorID as jest.Mock).mockResolvedValue({ id: 'cliente123' });
+      (produtoGatewayMock.buscarProdutoPorID as jest.Mock).mockResolvedValue({ id: 'produto1', valor: 100 });
+      (cadastrarIntencaoPagamentoUseCaseMock.execute as jest.Mock).mockRejectedValue(
+        new Error('Falha ao criar intenção de pagamento'),
+      );
+
+      await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGateway)).rejects.toThrowError(
+        new HttpException('Falha ao criar intenção de pagamento', HttpStatus.BAD_REQUEST),
+      );
+    });
+
+    it('Deve salvar o pedido e adicionar ao cache com sucesso', async () => {
+      const pedido = new Pedido('cliente123', [{ idProduto: 'produto1', quantidade: 2, valor: 100 } as ItemPedido], 'intencaoPagamento123');
+
+      (clienteGatewayMock.adquirirPorID as jest.Mock).mockResolvedValue({ id: 'cliente123' });
+      (produtoGatewayMock.buscarProdutoPorID as jest.Mock).mockResolvedValue({ id: 'produto1', valor: 100 });
+      (cadastrarIntencaoPagamentoUseCaseMock.execute as jest.Mock).mockResolvedValue({
+        id: { toHexString: jest.fn().mockReturnValue('intencaoPagamento123') },
+      });
+
+      const pedidoSalvoMock = new Pedido('cliente123', [{ idProduto: 'produto1', quantidade: 2, valor: 100 } as ItemPedido], 'intencaoPagamento123');
+
+      (pedidoGateway.salvarPedido as jest.Mock).mockResolvedValue(pedidoSalvoMock);
+      (pedidoGateway.adicionarPedidoCache as jest.Mock).mockResolvedValue(undefined);
+
+      const resultado = await cadastrarPedidoUseCase.execute(pedido, pedidoGateway);
 
       expect(pedidoGateway.salvarPedido).toHaveBeenCalled();
       expect(pedidoGateway.adicionarPedidoCache).toHaveBeenCalled();
-      expect(resultado).toEqual({ /* Mock do resultado do pedido salvo */ });
+      expect(resultado).toEqual(pedidoSalvoMock);
     });
   });
 });

@@ -24,7 +24,7 @@ export class PedidoEntity {
   @Column({
     name: "status",
     nullable: false,
-    type: "enum",
+    type: "varchar",
     enum: PedidoStatusType,
   })
   status: string;

@@ -13,12 +13,17 @@ describe('ListarPedidoPorIdClienteUseCase', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ListarPedidoPorIdClienteUseCase,
-        PedidoGateway
+        {
+          provide: PedidoGateway,
+          useValue: {
+            listarPorIdCliente: jest.fn(), // Mockando o método listarPorIdCliente
+          },
+        },
       ],
     }).compile();
 
     listarPedidoPorIdClienteUseCase = module.get<ListarPedidoPorIdClienteUseCase>(ListarPedidoPorIdClienteUseCase);
-    pedidoGateway = module.get<PedidoGateway>('PedidoGateway');
+    pedidoGateway = module.get<PedidoGateway>(PedidoGateway);
   });
 
   describe('execute', () => {
@@ -40,7 +45,7 @@ describe('ListarPedidoPorIdClienteUseCase', () => {
     });
 
     it('Deve lançar uma exceção se nenhum pedido for encontrado', async () => {
-        (pedidoGateway.listarPorIdCliente as jest.Mock).mockResolvedValue(null); // Simulando nenhum pedido encontrado
+      (pedidoGateway.listarPorIdCliente as jest.Mock).mockResolvedValue(null); // Simulando nenhum pedido encontrado
 
       await expect(
         listarPedidoPorIdClienteUseCase.execute(pedidoGateway, 'clienteInvalido')
@@ -55,7 +60,7 @@ describe('ListarPedidoPorIdClienteUseCase', () => {
     });
 
     it('Deve lançar uma exceção se o gateway falhar', async () => {
-        (pedidoGateway.listarPorIdCliente as jest.Mock).mockRejectedValue(
+      (pedidoGateway.listarPorIdCliente as jest.Mock).mockRejectedValue(
         new Error('Erro ao listar pedidos do cliente')
       ); // Simulando erro no gateway
 

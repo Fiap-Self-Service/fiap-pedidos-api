@@ -4,6 +4,7 @@ import { PedidoGateway } from '../gateways/pedido-gateway';
 import { ListarPedidoUseCase } from '../../use-cases/listar-pedido-use-case';
 import { PedidoDTO } from '../../dto/pedidoDTO';
 import { Pedido } from '../../entities/pedido';
+import { ItemPedido } from 'src/core/entities/item-pedido';
 
 describe('ListarPedidoController', () => {
   let controller: ListarPedidoController;
@@ -32,10 +33,14 @@ describe('ListarPedidoController', () => {
 
   describe('execute', () => {
     it('deve retornar uma lista de PedidoDTOs', async () => {
-      const pedidos: Pedido[] = [
-        new Pedido('cliente1', [], 'pagamento123'),
-        new Pedido('cliente2', [], 'pagamento456'),
-      ];
+      const pedidos = [new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123'),
+      new Pedido('cliente2', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento456')];
 
       // Simulando que o UseCase retorna uma lista de pedidos
       (listarPedidoUseCaseMock.execute as jest.Mock).mockResolvedValue(pedidos);

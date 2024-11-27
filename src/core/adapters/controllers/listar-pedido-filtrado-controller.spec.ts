@@ -4,6 +4,7 @@ import { PedidoGateway } from '../gateways/pedido-gateway';
 import { ListarPedidoPorIdClienteUseCase } from '../../use-cases/listar-pedido-filtrado-use-case';
 import { PedidoDTO } from '../../dto/pedidoDTO';
 import { Pedido } from '../../entities/pedido';
+import { ItemPedido } from 'src/core/entities/item-pedido';
 
 describe('ListarPedidoPorIdClienteController', () => {
   let controller: ListarPedidoPorIdClienteController;
@@ -33,8 +34,12 @@ describe('ListarPedidoPorIdClienteController', () => {
   describe('execute', () => {
     it('deve retornar uma lista de PedidoDTOs para um cliente', async () => {
       const pedidos: Pedido[] = [
-        new Pedido('cliente1', [], 'pagamento123'),
-        new Pedido('cliente1', [], 'pagamento456'),
+        new Pedido('cliente1', [
+          { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        ], 'pagamento123'),
+        new Pedido('cliente1', [
+          { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        ], 'pagamento456'),
       ];
 
       // Simulando que o UseCase retorna uma lista de pedidos filtrados por cliente

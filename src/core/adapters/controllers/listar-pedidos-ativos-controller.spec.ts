@@ -4,6 +4,7 @@ import { PedidoGateway } from '../gateways/pedido-gateway';
 import { ListarPedidosAtivosUseCase } from '../../use-cases/listar-pedidos-ativos-use-case';
 import { PedidoDTO } from '../../dto/pedidoDTO';
 import { Pedido } from '../../entities/pedido';
+import { ItemPedido } from 'src/core/entities/item-pedido';
 
 describe('ListarPedidosAtivosController', () => {
   let controller: ListarPedidosAtivosController;
@@ -32,10 +33,14 @@ describe('ListarPedidosAtivosController', () => {
 
   describe('execute', () => {
     it('deve retornar uma lista de PedidoDTOs ativos', async () => {
-      const pedidosAtivos: Pedido[] = [
-        new Pedido('cliente1', [], 'pagamento123'),
-        new Pedido('cliente2', [], 'pagamento456'),
-      ];
+      const pedidosAtivos = [new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123'),
+      new Pedido('cliente2', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento456')];
 
       // Simulando que o UseCase retorna uma lista de pedidos ativos
       (listarPedidosAtivosUseCaseMock.execute as jest.Mock).mockResolvedValue(pedidosAtivos);

@@ -48,7 +48,33 @@ describe('PedidoAPIController', () => {
 
   describe('cadastrarPedido', () => {
     it('should call cadastrarPedidoController and return the result', async () => {
-      const pedidoDTO: PedidoDTO = { idPagamento: '123', combo: [], valorTotal: 100 };
+
+      const pedidoDTO: PedidoDTO = {
+        id: null,
+        idPagamento: '123',
+        idCliente: '123456',
+        valorTotal: 100,
+        dataCriacao: new Date(),
+        status: 'RECEBIDO',
+        combo: [
+          {
+            id: null,
+            idPedido: null,
+            idProduto: '111',
+            quantidade: 1,
+            valor: 50,
+          },
+          {
+            id: null, 
+            idPedido: null, 
+            idProduto: '222', 
+            quantidade: 2, 
+            valor: 25, 
+          },
+        ],
+      };
+
+
       cadastrarPedidoControllerMock.execute.mockResolvedValue(pedidoDTO);
 
       const result = await controller.cadastrarPedido(pedidoDTO);
@@ -60,7 +86,31 @@ describe('PedidoAPIController', () => {
 
   describe('listarPedidos', () => {
     it('should call listarPedidoController and return the result', async () => {
-      const pedidos: PedidoDTO[] = [{ idPagamento: '123', combo: [], valorTotal: 100 }];
+      const pedidos: PedidoDTO[] = [{
+        id: null,
+        idPagamento: '123',
+        idCliente: '123456',
+        valorTotal: 100,
+        dataCriacao: new Date(),
+        status: 'RECEBIDO',
+        combo: [
+          {
+            id: null,
+            idPedido: null,
+            idProduto: '111',
+            quantidade: 1,
+            valor: 50,
+          },
+          {
+            id: null, 
+            idPedido: null, 
+            idProduto: '222', 
+            quantidade: 2, 
+            valor: 25, 
+          },
+        ],
+      }];
+
       listarPedidoControllerMock.execute.mockResolvedValue(pedidos);
 
       const result = await controller.listarPedidos();
@@ -72,7 +122,31 @@ describe('PedidoAPIController', () => {
 
   describe('listarPedidosAtivos', () => {
     it('should call listarPedidosAtivosController and return the result', async () => {
-      const pedidosAtivos: PedidoDTO[] = [{ idPagamento: '123', combo: [], valorTotal: 100 }];
+      const pedidosAtivos: PedidoDTO[] = [{
+        id: null,
+        idPagamento: '123',
+        idCliente: '123456',
+        valorTotal: 100,
+        dataCriacao: new Date(),
+        status: 'RECEBIDO',
+        combo: [
+          {
+            id: null,
+            idPedido: null,
+            idProduto: '111',
+            quantidade: 1,
+            valor: 50,
+          },
+          {
+            id: null, 
+            idPedido: null, 
+            idProduto: '222', 
+            quantidade: 2, 
+            valor: 25, 
+          },
+        ],
+      }];
+
       listarPedidosAtivosControllerMock.execute.mockResolvedValue(pedidosAtivos);
 
       const result = await controller.listarPedidosAtivos();
@@ -84,7 +158,31 @@ describe('PedidoAPIController', () => {
 
   describe('consultarPedidoPorId', () => {
     it('should call consultarPedidoPorIdController and return the result', async () => {
-      const pedido: PedidoDTO = { idPagamento: '123', combo: [], valorTotal: 100 };
+      const pedido: PedidoDTO = {
+        id: '123',
+        idPagamento: '123',
+        idCliente: '123456',
+        valorTotal: 100,
+        dataCriacao: new Date(),
+        status: 'RECEBIDO',
+        combo: [
+          {
+            id: null,
+            idPedido: null,
+            idProduto: '111',
+            quantidade: 1,
+            valor: 50,
+          },
+          {
+            id: null, 
+            idPedido: null, 
+            idProduto: '222', 
+            quantidade: 2, 
+            valor: 25, 
+          },
+        ],
+      };
+
       consultarPedidoPorIdControllerMock.execute.mockResolvedValue(pedido);
 
       const result = await controller.consultarPedidoPorId('123');
@@ -96,7 +194,31 @@ describe('PedidoAPIController', () => {
 
   describe('listarPedidoPorIdCliente', () => {
     it('should call listarPedidoPorIdClienteController and return the result', async () => {
-      const pedidos: PedidoDTO[] = [{ idPagamento: '123', combo: [], valorTotal: 100 }];
+      const pedidos: PedidoDTO[] = [{
+        id: null,
+        idPagamento: '123',
+        idCliente: '456',
+        valorTotal: 100,
+        dataCriacao: new Date(),
+        status: 'RECEBIDO',
+        combo: [
+          {
+            id: null,
+            idPedido: null,
+            idProduto: '111',
+            quantidade: 1,
+            valor: 50,
+          },
+          {
+            id: null, 
+            idPedido: null, 
+            idProduto: '222', 
+            quantidade: 2, 
+            valor: 25, 
+          },
+        ],
+      }];
+
       listarPedidoPorIdClienteControllerMock.execute.mockResolvedValue(pedidos);
 
       const result = await controller.listarPedidoPorIdCliente('456');
@@ -109,7 +231,31 @@ describe('PedidoAPIController', () => {
   describe('atualizarStatusPedido', () => {
     it('should call atualizarStatusPedidoController and return the result', async () => {
       const atualizarPedidoDTO: AtualizarPedidoDTO = { status: 'RECEBIDO' };
-      const pedidoAtualizado: PedidoDTO = { idPagamento: '123', combo: [], valorTotal: 100 };
+      const pedidoAtualizado: PedidoDTO = {
+        id: null,
+        idPagamento: '123',
+        idCliente: '123456',
+        valorTotal: 100,
+        dataCriacao: new Date(),
+        status: 'PRONTO',
+        combo: [
+          {
+            id: null,
+            idPedido: null,
+            idProduto: '111',
+            quantidade: 1,
+            valor: 50,
+          },
+          {
+            id: null, 
+            idPedido: null, 
+            idProduto: '222', 
+            quantidade: 2, 
+            valor: 25, 
+          },
+        ],
+      };
+
       atualizarStatusPedidoControllerMock.execute.mockResolvedValue(pedidoAtualizado);
 
       const result = await controller.atualizarStatusPedido('789', atualizarPedidoDTO);

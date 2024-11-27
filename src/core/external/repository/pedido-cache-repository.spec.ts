@@ -1,11 +1,10 @@
-import { DynamoDB } from "aws-sdk";
-import { PedidoCacheRepository } from "./pedido-cache-repository";
-import { PedidoEntity } from "./pedido.entity";
-import { PedidoStatusType } from "../../entities/pedido-status-type.enum";
+import { PedidoCacheRepository } from './pedido-cache-repository';
+import { DynamoDB } from 'aws-sdk';
+import { PedidoEntity } from './pedido.entity';
 
-jest.mock("aws-sdk");
+jest.mock('aws-sdk');
 
-describe("PedidoCacheRepository", () => {
+describe('PedidoCacheRepository', () => {
   let pedidoCacheRepository: PedidoCacheRepository;
   let dynamoDbMock: jest.Mocked<DynamoDB.DocumentClient>;
 
@@ -14,9 +13,9 @@ describe("PedidoCacheRepository", () => {
     pedidoCacheRepository = new PedidoCacheRepository(dynamoDbMock);
   });
 
-  describe("listarPedidosAtivos", () => {
-    it("deve retornar uma lista de pedidos ativos", async () => {
-      const mockItems = [{ id: "1", status: "RECEBIDO" }];
+  describe('listarPedidosAtivos', () => {
+    it('deve retornar uma lista de pedidos ativos', async () => {
+      const mockItems = [{ id: '1', status: 'RECEBIDO' }];
       dynamoDbMock.scan.mockReturnValue({
         promise: jest.fn().mockResolvedValue({ Items: mockItems }),
       } as any);
@@ -25,12 +24,12 @@ describe("PedidoCacheRepository", () => {
 
       expect(result).toEqual(mockItems);
       expect(dynamoDbMock.scan).toHaveBeenCalledWith({
-        TableName: "fiap-self-service-pedidos-ativos",
+        TableName: 'fiap-self-service-pedidos-ativos',
       });
     });
 
-    it("deve lançar erro ao falhar ao listar pedidos ativos", async () => {
-      const mockError = new Error("DynamoDB error");
+    it('deve lançar erro ao falhar ao listar pedidos ativos', async () => {
+      const mockError = new Error('DynamoDB error');
       dynamoDbMock.scan.mockReturnValue({
         promise: jest.fn().mockRejectedValue(mockError),
       } as any);
@@ -41,9 +40,9 @@ describe("PedidoCacheRepository", () => {
     });
   });
 
-  describe("adicionarPedidoCache", () => {
-    it("deve adicionar um pedido ao cache", async () => {
-      const mockPedido = { id: "1", status: "RECEBIDO" } as PedidoEntity;
+  describe('adicionarPedidoCache', () => {
+    it('deve adicionar um pedido ao cache', async () => {
+      const mockPedido = { id: '1', status: 'RECEBIDO' } as PedidoEntity;
       dynamoDbMock.put.mockReturnValue({
         promise: jest.fn().mockResolvedValue(undefined),
       } as any);
@@ -51,14 +50,14 @@ describe("PedidoCacheRepository", () => {
       await pedidoCacheRepository.adicionarPedidoCache(mockPedido);
 
       expect(dynamoDbMock.put).toHaveBeenCalledWith({
-        TableName: "fiap-self-service-pedidos-ativos",
+        TableName: 'fiap-self-service-pedidos-ativos',
         Item: mockPedido,
       });
     });
 
-    it("deve lançar erro ao falhar ao adicionar um pedido ao cache", async () => {
-      const mockPedido = { id: "1", status: "RECEBIDO" } as PedidoEntity;
-      const mockError = new Error("DynamoDB error");
+    it('deve lançar erro ao falhar ao adicionar um pedido ao cache', async () => {
+      const mockPedido = { id: '1', status: 'RECEBIDO' } as PedidoEntity;
+      const mockError = new Error('DynamoDB error');
       dynamoDbMock.put.mockReturnValue({
         promise: jest.fn().mockRejectedValue(mockError),
       } as any);
@@ -69,9 +68,9 @@ describe("PedidoCacheRepository", () => {
     });
   });
 
-  describe("removerPedidoCache", () => {
-    it("deve remover um pedido do cache", async () => {
-      const mockId = "1";
+  describe('removerPedidoCache', () => {
+    it('deve remover um pedido do cache', async () => {
+      const mockId = '1';
       dynamoDbMock.delete.mockReturnValue({
         promise: jest.fn().mockResolvedValue(undefined),
       } as any);
@@ -79,14 +78,14 @@ describe("PedidoCacheRepository", () => {
       await pedidoCacheRepository.removerPedidoCache(mockId);
 
       expect(dynamoDbMock.delete).toHaveBeenCalledWith({
-        TableName: "fiap-self-service-pedidos-ativos",
+        TableName: 'fiap-self-service-pedidos-ativos',
         Key: { id: mockId },
       });
     });
 
-    it("deve lançar erro ao falhar ao remover um pedido do cache", async () => {
-      const mockId = "1";
-      const mockError = new Error("DynamoDB error");
+    it('deve lançar erro ao falhar ao remover um pedido do cache', async () => {
+      const mockId = '1';
+      const mockError = new Error('DynamoDB error');
       dynamoDbMock.delete.mockReturnValue({
         promise: jest.fn().mockRejectedValue(mockError),
       } as any);
@@ -97,14 +96,10 @@ describe("PedidoCacheRepository", () => {
     });
   });
 
-  describe("atualizarStatusPedidoCache", () => {
-    it.each([
-      PedidoStatusType.RECEBIDO,
-      PedidoStatusType.PREPARACAO,
-      PedidoStatusType.PRONTO,
-      PedidoStatusType.FINALIZADO,
-    ])("deve atualizar o status '%s' de um pedido no cache", async (mockStatus) => {
-      const mockId = "1";
+  describe('atualizarStatusPedidoCache', () => {
+    it('deve atualizar o status de um pedido no cache', async () => {
+      const mockId = '1';
+      const mockStatus = 'RECEBIDO';
       dynamoDbMock.update.mockReturnValue({
         promise: jest.fn().mockResolvedValue(undefined),
       } as any);
@@ -112,24 +107,24 @@ describe("PedidoCacheRepository", () => {
       await pedidoCacheRepository.atualizarStatusPedidoCache(mockId, mockStatus);
 
       expect(dynamoDbMock.update).toHaveBeenCalledWith({
-        TableName: "fiap-self-service-pedidos-ativos",
-        Key: { pedidoId: mockId },
-        UpdateExpression: "set #field = :value",
-        ExpressionAttributeNames: { "#field": "status" },
-        ExpressionAttributeValues: { ":value": mockStatus },
+        TableName: 'fiap-self-service-pedidos-ativos',
+        Key: { id: mockId },
+        UpdateExpression: 'set #field = :value',
+        ExpressionAttributeNames: { '#field': 'status' },
+        ExpressionAttributeValues: { ':value': mockStatus },
       });
     });
 
-    it("deve lançar erro ao falhar ao atualizar o status de um pedido no cache", async () => {
-      const mockId = "1";
-      const mockStatus = PedidoStatusType.PRONTO;
-      const mockError = new Error("DynamoDB error");
+    it('deve lançar erro ao falhar ao atualizar o status de um pedido no cache', async () => {
+      const mockId = '1';
+      const mockStatus = 'RECEBIDO';
+      const mockError = new Error('DynamoDB error');
       dynamoDbMock.update.mockReturnValue({
         promise: jest.fn().mockRejectedValue(mockError),
       } as any);
 
       await expect(pedidoCacheRepository.atualizarStatusPedidoCache(mockId, mockStatus)).rejects.toThrow(
-        `Could not update pedido: ${mockError.message}`
+        `Não foi possível atualizar o pedido no cache: ${mockError.message}`
       );
     });
   });

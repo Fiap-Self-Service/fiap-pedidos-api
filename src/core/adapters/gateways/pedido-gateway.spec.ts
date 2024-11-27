@@ -4,6 +4,7 @@ import { IPedidoRepository } from '../../external/repository/pedido-repository.i
 import { IPedidoCacheRepository } from '../../external/repository/pedido-cache-repository.interface';
 import { Pedido } from '../../entities/pedido';
 import { AtualizarPedidoDTO } from '../../dto/atualizarStatusPedidoDTO';
+import { ItemPedido } from 'src/core/entities/item-pedido';
 
 describe('PedidoGateway', () => {
   let pedidoGateway: PedidoGateway;
@@ -40,7 +41,10 @@ describe('PedidoGateway', () => {
 
   describe('salvarPedido', () => {
     it('deve salvar um pedido', async () => {
-      const pedido = new Pedido('cliente1', [], 'pagamento123');
+      const pedido = new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123');
       (pedidoRepositoryMock.salvarPedido as jest.Mock).mockResolvedValue(pedido);
 
       const result = await pedidoGateway.salvarPedido(pedido);
@@ -52,7 +56,10 @@ describe('PedidoGateway', () => {
 
   describe('listarPorIdCliente', () => {
     it('deve listar pedidos por idCliente', async () => {
-      const pedidos = [new Pedido('cliente1', [], 'pagamento123')];
+      const pedidos = [new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123')];
       (pedidoRepositoryMock.listarPorIdCliente as jest.Mock).mockResolvedValue(pedidos);
 
       const result = await pedidoGateway.listarPorIdCliente('cliente1');
@@ -64,7 +71,10 @@ describe('PedidoGateway', () => {
 
   describe('listarPedidos', () => {
     it('deve listar todos os pedidos', async () => {
-      const pedidos = [new Pedido('cliente1', [], 'pagamento123')];
+      const pedidos = [new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123')];
       (pedidoRepositoryMock.listarPedidos as jest.Mock).mockResolvedValue(pedidos);
 
       const result = await pedidoGateway.listarPedidos();
@@ -76,7 +86,10 @@ describe('PedidoGateway', () => {
 
   describe('buscarPorIdPedido', () => {
     it('deve buscar pedido por id', async () => {
-      const pedido = new Pedido('cliente1', [], 'pagamento123');
+      const pedido = new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123');
       (pedidoRepositoryMock.buscarPorIdPedido as jest.Mock).mockResolvedValue(pedido);
 
       const result = await pedidoGateway.buscarPorIdPedido('pedido123');
@@ -89,7 +102,10 @@ describe('PedidoGateway', () => {
   describe('atualizarStatusPedido', () => {
     it('deve atualizar o status de um pedido', async () => {
       const atualizarPedidoDTO: AtualizarPedidoDTO = { status: 'FINALIZADO' };
-      const pedido = new Pedido('cliente1', [], 'pagamento123');
+      const pedido = new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123');
       (pedidoRepositoryMock.atualizarStatusPedido as jest.Mock).mockResolvedValue(pedido);
 
       const result = await pedidoGateway.atualizarStatusPedido('pedido123', atualizarPedidoDTO);
@@ -101,7 +117,10 @@ describe('PedidoGateway', () => {
 
   describe('adicionarPedidoCache', () => {
     it('deve adicionar um pedido ao cache', async () => {
-      const pedido = new Pedido('cliente1', [], 'pagamento123');
+      const pedido = new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123');
       (pedidoCacheRepositoryMock.adicionarPedidoCache as jest.Mock).mockResolvedValue(undefined);
 
       await pedidoGateway.adicionarPedidoCache(pedido);
@@ -123,7 +142,10 @@ describe('PedidoGateway', () => {
 
   describe('listarPedidosAtivos', () => {
     it('deve listar pedidos ativos', async () => {
-      const pedidos = [new Pedido('cliente1', [], 'pagamento123')];
+      const pedidos = [new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123')];
       (pedidoCacheRepositoryMock.listarPedidosAtivos as jest.Mock).mockResolvedValue(pedidos);
 
       const result = await pedidoGateway.listarPedidosAtivos();

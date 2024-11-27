@@ -3,21 +3,41 @@ import { ListarPedidosAtivosUseCase } from '../use-cases/listar-pedidos-ativos-u
 import { PedidoGateway } from '../adapters/gateways/pedido-gateway';
 import { Pedido } from '../entities/pedido';
 import { ItemPedido } from '../entities/item-pedido';
+import { IPedidoRepository } from '../external/repository/pedido-repository.interface';
+import { IPedidoCacheRepository } from '../external/repository/pedido-cache-repository.interface';
+
+jest.mock('../adapters/gateways/pedido-gateway'); // Mocka a classe PedidoGateway
 
 describe('ListarPedidosAtivosUseCase', () => {
   let listarPedidosAtivosUseCase: ListarPedidosAtivosUseCase;
-  let pedidoGateway: PedidoGateway;
+  let pedidoGateway: jest.Mocked<PedidoGateway>; // Agora é um mock da classe PedidoGateway
+  let pedidoRepositoryMock: jest.Mock;
+  let pedidoCacheRepositoryMock: jest.Mock;
 
   beforeEach(async () => {
+    pedidoRepositoryMock = jest.fn(); 
+    pedidoCacheRepositoryMock = jest.fn();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ListarPedidosAtivosUseCase,
-        PedidoGateway
+        PedidoGateway, // Agora já está sendo mockada globalmente
+        {
+          provide: IPedidoRepository, // Mock do IPedidoRepository
+          useValue: pedidoRepositoryMock,
+        },
+        {
+          provide: IPedidoCacheRepository, // Mock do IPedidoCacheRepository
+          useValue: pedidoCacheRepositoryMock,
+        }
       ],
     }).compile();
 
     listarPedidosAtivosUseCase = module.get<ListarPedidosAtivosUseCase>(ListarPedidosAtivosUseCase);
-    pedidoGateway = module.get<PedidoGateway>('PedidoGateway');
+    pedidoGateway = module.get<jest.Mocked<PedidoGateway>>(PedidoGateway);
+
+    // Mockando especificamente o método listarPedidosAtivos
+    pedidoGateway.listarPedidosAtivos = jest.fn(); 
   });
 
   describe('execute', () => {
@@ -39,7 +59,7 @@ describe('ListarPedidosAtivosUseCase', () => {
     });
 
     it('Deve retornar uma lista vazia se não houver pedidos ativos', async () => {
-        (pedidoGateway.listarPedidosAtivos as jest.Mock).mockResolvedValue([]); // Simulando nenhum pedido ativo
+      (pedidoGateway.listarPedidosAtivos as jest.Mock).mockResolvedValue([]); // Simulando nenhum pedido ativo
 
       const resultado = await listarPedidosAtivosUseCase.execute(pedidoGateway);
 
@@ -48,7 +68,7 @@ describe('ListarPedidosAtivosUseCase', () => {
     });
 
     it('Deve lançar um erro se o gateway falhar', async () => {
-        (pedidoGateway.listarPedidosAtivos as jest.Mock).mockRejectedValue(
+      (pedidoGateway.listarPedidosAtivos as jest.Mock).mockRejectedValue(
         new Error('Erro ao listar pedidos ativos')
       ); // Simulando erro no gateway
 

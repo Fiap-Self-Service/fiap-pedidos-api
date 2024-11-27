@@ -4,6 +4,7 @@ import { PedidoGateway } from '../gateways/pedido-gateway';
 import { ConsultarPedidoPorIdUseCase } from '../../use-cases/consultar-pedido-use-case';
 import { PedidoDTO } from '../../dto/pedidoDTO';
 import { Pedido } from '../../entities/pedido';
+import { ItemPedido } from 'src/core/entities/item-pedido';
 
 describe('ConsultarPedidoPorIdController', () => {
   let controller: ConsultarPedidoPorIdController;
@@ -33,7 +34,11 @@ describe('ConsultarPedidoPorIdController', () => {
   describe('execute', () => {
     it('deve retornar um PedidoDTO ao consultar um pedido por ID', async () => {
       const idPedido = 'pedido123';
-      const pedido = new Pedido('cliente1', [], 'pagamento123');
+      const pedido = new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123');
+
       pedido.id = idPedido;
 
       // Simulando a resposta do UseCase

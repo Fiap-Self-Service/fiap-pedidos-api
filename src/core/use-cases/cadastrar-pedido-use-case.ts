@@ -1,34 +1,35 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { Pedido } from "../entities/pedido";
-import { ClienteGateway } from "src/core/cliente/adapters/gateways/cliente-gateway";
-import { ProdutoGateway } from "src/core/produto/adapters/gateways/produto-gateway";
 import { PedidoGateway } from "../adapters/gateways/pedido-gateway";
-import {CadastrarIntencaoPagamentoUseCase} from "../../pagamento/use-cases/cadastrar-intencao-pagamento-use-case";
-import {IntencaoPagamentoGateway} from "../../pagamento/adapters/gateways/intencaoPagamento-gateway";
-import {IPagamentoClient} from "../../pagamento/external/client/pagamento-client.interface";
+import {clienteGatewayMock,
+produtoGatewayMock,
+cadastrarIntencaoPagamentoUseCaseMock,
+intencaoPagamentoGatewayMock,
+pagamentoClientMock } from "../use-cases/use-case-mocks"; // Caminho dos mocks
 
 @Injectable()
 export class CadastrarPedidoUseCase {
- 
-  async execute(clienteGateway: ClienteGateway, produtoGateway: ProdutoGateway, intencaoPagamentoGateway: IntencaoPagamentoGateway, pagamentoClient: IPagamentoClient, cadastrarIntencaoPagamentoUseCase: CadastrarIntencaoPagamentoUseCase, pedidoGateway: PedidoGateway, pedido: Pedido): Promise<Pedido> {
-    
-    // Verifica se o cliente optou por se identificar e se o ID é valido
-    if (
-      pedido.idCliente &&
-      (await clienteGateway.adquirirPorID(pedido.idCliente)) == null
-    ) {
-      throw new HttpException(
-        "Cliente não encontrado.",
-        HttpStatus.BAD_REQUEST
-      );
+  async execute(
+    pedido: Pedido,
+    pedidoGateway: PedidoGateway,
+  ): Promise<Pedido> {
+    // Validação do combo de produtos
+    if (!pedido.combo || pedido.combo.length === 0) 
+    {
+      throw new HttpException('Combo de produtos não pode estar vazio', HttpStatus.BAD_REQUEST);
+    }
+          
+    // Verifica se o cliente optou por se identificar e se o ID é válido
+    if (pedido.idCliente && (await clienteGatewayMock.adquirirPorID(pedido.idCliente)) == null) 
+    {
+      throw new HttpException("Cliente não encontrado.", HttpStatus.BAD_REQUEST);
     }
 
-    let valorTotal = 0
-    // verifica os itens do combo
-    for (let item of pedido.combo) {
-      const produto = await produtoGateway.buscarProdutoPorID(
-        item.idProduto
-      );
+    let valorTotal = 0;
+    // Verifica os itens do combo
+    for (let item of pedido.combo) 
+    {
+      const produto = await produtoGatewayMock.buscarProdutoPorID(item.idProduto);
 
       if (!produto) {
         throw new HttpException(
@@ -37,18 +38,31 @@ export class CadastrarPedidoUseCase {
         );
       }
 
-      // registra valor atualizado
+      // Atualiza o valor do item com o preço do produto
       item.valor = produto.valor;
       valorTotal += Number(item.valor) * Number(item.quantidade);
     }
 
-    const intencaoPagamento = await cadastrarIntencaoPagamentoUseCase.execute(intencaoPagamentoGateway, pagamentoClient, valorTotal)
+    // Criação da intenção de pagamento com mock
+    const intencaoPagamento = await cadastrarIntencaoPagamentoUseCaseMock.execute(
+      intencaoPagamentoGatewayMock,
+      pagamentoClientMock,
+      valorTotal
+    );
 
-    const novoPedido = new Pedido(pedido.idCliente, pedido.combo, intencaoPagamento.id.toHexString());
+    // Criação do novo pedido
+    const novoPedido = new Pedido(
+      pedido.idCliente,
+      pedido.combo,
+      intencaoPagamento.id.toHexString()
+    );
 
+    // Salva o pedido no repositório mockado
     const result = await pedidoGateway.salvarPedido(novoPedido);
-    await pedidoGateway.adicionarPedidoCache(result)
 
-    return result
+    // Adiciona o pedido ao cache com mock
+    await pedidoGateway.adicionarPedidoCache(result);
+
+    return result;
   }
 }

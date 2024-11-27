@@ -1,3 +1,4 @@
+import { DynamoDB } from 'aws-sdk';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { HealthModule } from './infrastructure/health/health.module';
@@ -21,29 +22,14 @@ import { DataSource } from 'typeorm';
 import { PedidoEntity } from './core/external/repository/pedido.entity';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { PedidoAPIController } from './core/external/api/pedido-api.controller';
+import { IPedidoCacheRepository } from './core/external/repository/pedido-cache-repository.interface';
+import { ItemPedidoEntity } from './core/external/repository/itemPedido.entity';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    HealthModule,
-    DatabaseModule,
-  ],
-  controllers: [
-    // Adapters for pedidos
-    PedidoAPIController,
-    ConsultarPedidoPorIdController,
-    AtualizarStatusPedidoController,
-    ListarPedidoController,
-    ListarPedidoPorIdClienteController,
-    ListarPedidosAtivosController,
-    CadastrarPedidoController,
-  ],
-  exports: [PedidoGateway],
   providers: [
     // Gateways
     PedidoGateway,
+
     // Use cases
     CadastrarPedidoUseCase,
     AtualizarStatusPedidoUseCase,
@@ -51,10 +37,36 @@ import { PedidoAPIController } from './core/external/api/pedido-api.controller';
     ListarPedidoUseCase,
     ListarPedidoPorIdClienteUseCase,
     ListarPedidosAtivosUseCase,
+
+    // controllers
+    ConsultarPedidoPorIdController,
+    AtualizarStatusPedidoController,
+    ListarPedidoController,
+    ListarPedidoPorIdClienteController,
+    ListarPedidosAtivosController,
+    CadastrarPedidoController,
+
     // External repositories
+    {
+      provide: 'DYNAMODB_CLIENT',
+      useFactory: () => {
+        return new DynamoDB.DocumentClient({
+          region: 'us-east-1',
+          endpoint: 'http://localhost:8000',
+          credentials: {
+            accessKeyId: 'dummy',  // Credenciais fictícias
+            secretAccessKey: 'dummy'
+          }
+        });
+      },
+    },
     {
       provide: IPedidoRepository,
       useClass: PedidoRepository,
+    },
+    {
+      provide: IPedidoCacheRepository,
+      useClass: PedidoCacheRepository,
     },
     {
       provide: 'PEDIDO_REPOSITORY',
@@ -63,9 +75,20 @@ import { PedidoAPIController } from './core/external/api/pedido-api.controller';
       inject: ['DATA_SOURCE'],
     },
     {
-      provide: 'PEDIDO_CACHE_REPOSITORY',
-      useClass: PedidoCacheRepository,
-    },
+      provide: 'ITEM_PEDIDO_REPOSITORY',
+      useFactory: (dataSource: DataSource) =>
+        dataSource.getRepository(ItemPedidoEntity),
+      inject: ['DATA_SOURCE'],
+    }
   ],
+  controllers: [PedidoAPIController],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    HealthModule,
+    DatabaseModule,
+  ],
+  exports: [PedidoGateway]
 })
 export class AppModule {}
