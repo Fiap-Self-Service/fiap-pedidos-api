@@ -2,25 +2,52 @@ version: '3.7'
 
 services:
 
-  fiap-pedidos-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    networks: 
+  # microsservico de clientes
+  fiap-clientes-api:
+      image: jacksoncarbonera/fiap-clientes-api
+      networks: 
       - fiap-pedidos-api-net
-    restart: always
-    depends_on:
-      - fiap-pedidos-api-db-mysql
-    ports:
-      - 3000:3000
-    environment:
-      DATABASE_HOST: fiap-pedidos-api-db-mysql
-      DATABASE_PORT: 3306
-      DATABASE_USERNAME: fiap
-      DATABASE_PASSWORD: fiap
-      DATABASE_DATABASE: fiap-pedidos
-      MYSQL_BIND_ADDRESS: 0.0.0.0
+      ports:
+      - 3010:3010
+      environment:
+        DATABASE_HOST: fiap-pedidos-api-db-mysql
+        DATABASE_PORT: 3306
+        DATABASE_USERNAME: fiap
+        DATABASE_PASSWORD: fiap
+        DATABASE_DATABASE: fiap-clientes
+        APPLICATION_PORT: 3010
+  
+  # microsservico de produtos
+  fiap-produtos-api:
+      image: jacksoncarbonera/fiap-produtos-api
+      networks: 
+      - fiap-pedidos-api-net
+      ports:
+      - 3011:3011
+      environment:
+        DATABASE_HOST: fiap-pedidos-api-db-mysql
+        DATABASE_PORT: 3306
+        DATABASE_USERNAME: fiap
+        DATABASE_PASSWORD: fiap
+        DATABASE_DATABASE: fiap-clientes
+        APPLICATION_PORT: 3011
 
+  # microsservico de pagamentos
+  fiap-pagamentos-api:
+      image: jacksoncarbonera/fiap-pagamentos-api
+      networks: 
+      - fiap-pedidos-api-net
+      ports:
+      - 3012:3012
+      environment:
+        DOCUMENT_DATABASE_HOST: fiap-pagamentos-api-db-documents
+        DOCUMENT_DATABASE_PORT: 27017
+        DOCUMENT_DATABASE_USERNAME: fiap
+        DOCUMENT_DATABASE_PASSWORD: fiap
+        DOCUMENT_DATABASE_DATABASE: fiap
+        APPLICATION_PORT: 3012
+
+  # banco de dados para cache de pedidos
   fiap-pedidos-api-dynamodb:
       image: amazon/dynamodb-local
       container_name: dynamodb-local
@@ -34,6 +61,7 @@ services:
         - AWS_SECRET_ACCESS_KEY=dummy
         - JAVA_TOOL_OPTIONS=-Xmx2048m -Xms2048m
 
+  # banco de dados para os microsservicos
   fiap-pedidos-api-db-mysql:
     image: mysql:8.0
     restart: always
@@ -41,6 +69,7 @@ services:
       - fiap-pedidos-api-net
     volumes:
       - mysql_data_fiap_pedidos:/var/lib/mysql
+      - ./init-db.d:/docker-entrypoint-initdb.d  # Volume para scripts de inicialização
     ports:
       - 3306:3306
     environment:
@@ -48,9 +77,25 @@ services:
       MYSQL_DATABASE: fiap-pedidos
       MYSQL_USER: fiap
       MYSQL_PASSWORD: fiap
+  
+  # banco de dados documentos para pagamentos
+  fiap-pagamentos-api-db-documents:
+    image: mongo:6.0
+    restart: always
+    networks:
+      - fiap-pedidos-api-net
+    volumes:
+      - document_data_fiap_pagamentos:/data/db
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_DATABASE: fiap
+      MONGO_INITDB_ROOT_USERNAME: fiap
+      MONGO_INITDB_ROOT_PASSWORD: fiap
 
 volumes:
   mysql_data_fiap_pedidos: {}
+  document_data_fiap_pagamentos: {}
   dynamodb_data: {}
 
 networks:
