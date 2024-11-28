@@ -34,7 +34,7 @@ export const databaseProviders = [
   {
     provide: 'CACHE_DATA_SOURCE',
     useFactory: async () => {
-      const isDynamoDBLocal = process.env.DYNAMODB_ENDPOINT === 'http://localhost:8000';
+      const isDynamoDBLocal = process.env.DYNAMODB_ENDPOINT === null || process.env.DYNAMODB_ENDPOINT === 'http://localhost:8000';
       const dynamoDBConfig = new DynamoDB.DocumentClient({
         region: process.env.DYNAMODB_REGION || 'us-east-1',
         endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
