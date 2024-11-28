@@ -1,0 +1,116 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  code-analisys:
+    runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: "docker:19.03.12"
+        options: --privileged
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: 20
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run Unit Tests
+      run: npm run test:cov
+
+    - name: Validar cobertura de Testes
+      run: |
+        MIN_COVERAGE=80
+        COVERAGE_JSON=$(cat coverage/coverage-summary.json)
+        LINE_COVERAGE=$(echo "$COVERAGE_JSON" | jq '.total.lines.pct')
+        if (( $(echo "$LINE_COVERAGE < $MIN_COVERAGE" | bc -l) )); then
+          echo "A cobertura de teste está abaixo do limite mínimo de $MIN_COVERAGE%. Cobertura atual: $LINE_COVERAGE%"
+          exit 1
+        else
+          echo "A cobertura da linha atende ao limite mínimo: $LINE_COVERAGE%"
+        fi
+
+    - name: Upload results to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN_PEDIDOS }}
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Run Docker container (DynamoDB)
+      run: |
+        docker compose up fiap-pedidos-api-dynamodb -d 
+
+    - name: Run Integration Tests
+      run: npm run test:e2e
+  
+    - name: Run BDD Tests
+      run: npm run test:cucumber
+    
+    - name: Stop Docker container (DynamoDB)
+      run: |
+        docker compose down fiap-pedidos-api-dynamodb
+    
+    - name: Run Build App
+      run: npm run build
+    
+  build-docker-image:
+    runs-on: ubuntu-latest
+    needs: code-analisys
+    if: github.event_name != 'pull_request'
+    steps:
+     - name: Checkout code
+       uses: actions/checkout@v2
+
+     - name: Login to DockerHub
+       run: docker login -u jacksoncarbonera -p ${{ secrets.DOCKERHUB_TOKEN }}
+
+     - name: Build and push Docker image
+       run: |
+         docker build -t jacksoncarbonera/fiap-pedidos-api .
+         docker push jacksoncarbonera/fiap-pedidos-api
+    
+  deploy-aws:
+    runs-on: ubuntu-latest
+    needs: build-docker-image
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kube config
+        run: aws eks update-kubeconfig --name fiap-self-service-k8s --region us-east-1
+
+      - name: Deploy to EKS
+        run: |
+          kubectl apply -f kubernetes/api-namespace.yaml
+          kubectl apply -f kubernetes/api-configmap.yaml
+          kubectl apply -f kubernetes/api-secrets.yaml
+          kubectl apply -f kubernetes/api-deployment.yaml
+          kubectl apply -f kubernetes/api-service.yaml
+
+      - name: Verificar Status do Deploy
+        run: kubectl get pods

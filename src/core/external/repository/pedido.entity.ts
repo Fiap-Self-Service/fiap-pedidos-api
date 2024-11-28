@@ -24,8 +24,8 @@ export class PedidoEntity {
   @Column({
     name: "status",
     nullable: false,
-    type: "varchar",
-    enum: PedidoStatusType,
+    type: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testcucumber' ? "varchar" : "enum",
+    enum: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testcucumber' ? null : PedidoStatusType,
   })
   status: string;
 

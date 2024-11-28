@@ -2,8 +2,6 @@ import { Test } from '@nestjs/testing';
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';  // Ajuste o caminho conforme necessário
-import { PedidoDTO } from './../src/core/dto/pedidoDTO';
-import { ItemPedidoDTO } from './../src/core/dto/itemPedidoDTO';
 
 describe('Testes de Integração de Pedido', () => {
   let app: INestApplication;
