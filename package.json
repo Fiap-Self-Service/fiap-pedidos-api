@@ -99,8 +99,9 @@
       "/src/infrastructure/health/",
       "/src/app.module.ts",
       "/src/main.ts",
-      "/src/core/use-cases/use-case-mocks.ts",
-      "/src/core/adapters/controllers/ms-mock-controller.ts"
+      "/src/core/external/integration/fiap-clientes-api.client.ts",
+      "/src/core/external/integration/fiap-produtos-api.client.ts",
+      "/src/core/external/integration/fiap-pagamentos-api.client.ts"
     ],
     "coverageThreshold": {
       "global": {

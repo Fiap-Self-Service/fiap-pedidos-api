@@ -2,149 +2,97 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CadastrarPedidoUseCase } from './cadastrar-pedido-use-case';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Pedido } from '../entities/pedido';
-import { ItemPedido } from '../entities/item-pedido';
 import { PedidoGateway } from '../adapters/gateways/pedido-gateway';
-import { IPedidoRepository } from '../external/repository/pedido-repository.interface';
-import { IPedidoCacheRepository } from '../external/repository/pedido-cache-repository.interface';
-import {
-  clienteGatewayMock,
-  produtoGatewayMock,
-  intencaoPagamentoGatewayMock,
-  cadastrarIntencaoPagamentoUseCaseMock,
-  pagamentoClientMock,
-} from './use-case-mocks';
+import { fiapClientesApiClient } from '../external/integration/fiap-clientes-api.client';
+import { fiapProdutosApiClient } from '../external/integration/fiap-produtos-api.client';
+import { fiapPagamentosApiClient } from '../external/integration/fiap-pagamentos-api.client';
+import { ItemPedido } from '../entities/item-pedido';
+import { PedidoDTO } from '../dto/pedidoDTO';
 
+jest.mock('../external/integration/fiap-clientes-api.client');
+jest.mock('../external/integration/fiap-produtos-api.client');
+jest.mock('../external/integration/fiap-pagamentos-api.client');
 jest.mock('../adapters/gateways/pedido-gateway');
 
 describe('CadastrarPedidoUseCase', () => {
   let cadastrarPedidoUseCase: CadastrarPedidoUseCase;
-  let pedidoGateway: jest.Mocked<PedidoGateway>;
-  let pedidoRepositoryMock: jest.Mock;
-  let pedidoCacheRepositoryMock: jest.Mock;
+  let pedidoGatewayMock: PedidoGateway;
 
   beforeEach(async () => {
-    pedidoRepositoryMock = jest.fn();
-    pedidoCacheRepositoryMock = jest.fn();
-
+    // Cria o módulo de teste, incluindo o mock do PedidoGateway diretamente
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CadastrarPedidoUseCase,
-        PedidoGateway,
         {
-          provide: 'ClienteGateway',
-          useValue: clienteGatewayMock,
-        },
-        {
-          provide: 'ProdutoGateway',
-          useValue: produtoGatewayMock,
-        },
-        {
-          provide: 'IntencaoPagamentoGateway',
-          useValue: intencaoPagamentoGatewayMock,
-        },
-        {
-          provide: 'CadastrarIntencaoPagamentoUseCase',
-          useValue: cadastrarIntencaoPagamentoUseCaseMock,
-        },
-        {
-          provide: 'PagamentoClient',
-          useValue: pagamentoClientMock,
-        },
-        {
-          provide: IPedidoRepository,
-          useValue: pedidoRepositoryMock,
-        },
-        {
-          provide: IPedidoCacheRepository,
-          useValue: pedidoCacheRepositoryMock,
+          provide: PedidoGateway,
+          useValue: {
+            salvarPedido: jest.fn(),
+            adicionarPedidoCache: jest.fn(),
+          },
         },
       ],
     }).compile();
 
     cadastrarPedidoUseCase = module.get<CadastrarPedidoUseCase>(CadastrarPedidoUseCase);
-
-    // Configura o mock para PedidoGateway
-    pedidoGateway = module.get<PedidoGateway>(PedidoGateway) as jest.Mocked<PedidoGateway>;
-
-    // Mock explícito dos métodos de PedidoGateway
-    pedidoGateway.salvarPedido = jest.fn();
-    pedidoGateway.adicionarPedidoCache = jest.fn();
+    pedidoGatewayMock = module.get<PedidoGateway>(PedidoGateway);
   });
 
-  describe('execute', () => {
-    it('Deve lançar uma exceção se o cliente não for encontrado', async () => {
-      const pedido = new Pedido('cliente123', [
-        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
-      ], 'intencaoPagamento123');
+  it('deve lançar erro quando o combo de produtos estiver vazio', async () => {
+    const pedido = { idCliente: 'cliente1', combo: [], idPagamento: 'intencaoPagamento1'};
+    
+    await expect(cadastrarPedidoUseCase.execute(pedido as PedidoDTO, pedidoGatewayMock))
+      .rejects
+      .toThrowError(new HttpException('Combo de produtos não pode estar vazio', HttpStatus.BAD_REQUEST));
+  });
 
-      (clienteGatewayMock.adquirirPorID as jest.Mock).mockResolvedValue(null);
+  it('deve lançar erro quando o cliente não for encontrado', async () => {
+    const pedido = new Pedido('cliente1', [{ idProduto: 'produto1', quantidade: 1 } as ItemPedido], 'intencaoPagamento1');
+    fiapClientesApiClient.adquirirPorID = jest.fn().mockResolvedValue(null);
 
-      await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGateway)).rejects.toThrowError(
-        new HttpException('Cliente não encontrado.', HttpStatus.BAD_REQUEST),
-      );
-    });
+    await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGatewayMock))
+      .rejects
+      .toThrowError(new HttpException("Cliente não encontrado.", HttpStatus.BAD_REQUEST));
+  });
 
-    it('Deve lançar uma exceção se o combo de produtos estiver vazio', async () => {
-      const pedido = {
-        id: 'pedido123',
-        idCliente: 'cliente123',
-        combo: [],
-        idIntencaoPagamento: 'intencaoPagamento123',
-        idPagamento: null,
-        valorTotal: 0,
-        dataCriacao: new Date(),
-        status: 'PENDENTE',
-      } as unknown as Pedido;
+  it('deve lançar erro quando o produto não for encontrado', async () => {
+    const pedido = new Pedido('cliente1', [{ idProduto: 'produto1', quantidade: 1 } as ItemPedido], 'intencaoPagamento1');
+    fiapClientesApiClient.adquirirPorID = jest.fn().mockResolvedValue({ id: 'cliente1' });
+    fiapProdutosApiClient.buscarProdutoPorID = jest.fn().mockResolvedValue(null);
 
-      await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGateway)).rejects.toThrowError(
-        new HttpException('Combo de produtos não pode estar vazio', HttpStatus.BAD_REQUEST),
-      );
-    });
+    await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGatewayMock))
+      .rejects
+      .toThrowError(new HttpException("Ops... o produto produto1 não foi encontrado.", HttpStatus.BAD_REQUEST));
+  });
 
-    it('Deve lançar uma exceção se algum produto do combo não for encontrado', async () => {
-      const pedido = new Pedido('cliente123', [{ idProduto: 'produto1', quantidade: 2, valor: 100 } as ItemPedido], 'intencaoPagamento123');
+  it('deve calcular o valor total corretamente e salvar o pedido', async () => {
+    const pedido = { idCliente: 'cliente1', combo: [{ idProduto: 'produto1', quantidade: 2, valor: 50 } as ItemPedido,
+      { idProduto: 'produto2', quantidade: 1, valor: 100 } as ItemPedido,], idPagamento: 'intencaoPagamento1'};
 
-      (clienteGatewayMock.adquirirPorID as jest.Mock).mockResolvedValue({ id: 'cliente123' });
-      (produtoGatewayMock.buscarProdutoPorID as jest.Mock).mockResolvedValue(null);
+    fiapClientesApiClient.adquirirPorID = jest.fn().mockResolvedValue({ id: 'cliente1' });
+    fiapProdutosApiClient.buscarProdutoPorID = jest.fn()
+      .mockResolvedValueOnce({ id: 'produto1', valor: 50 })
+      .mockResolvedValueOnce({ id: 'produto2', valor: 100 });
+    fiapPagamentosApiClient.gerarPagamento = jest.fn().mockResolvedValue({ id: 'pagamento123' });
+    pedidoGatewayMock.salvarPedido = jest.fn().mockResolvedValue(pedido);
+    pedidoGatewayMock.adicionarPedidoCache = jest.fn().mockResolvedValue(undefined);
 
-      await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGateway)).rejects.toThrowError(
-        new HttpException('Ops... o produto produto1 não foi encontrado.', HttpStatus.BAD_REQUEST),
-      );
-    });
+    const resultado = await cadastrarPedidoUseCase.execute(pedido as Pedido, pedidoGatewayMock);
 
-    it('Deve lançar uma exceção se falhar ao criar a intenção de pagamento', async () => {
-      const pedido = new Pedido('cliente123', [{ idProduto: 'produto1', quantidade: 2, valor: 100 } as ItemPedido], 'intencaoPagamento123');
+    expect(resultado).toEqual(pedido);
+    expect(fiapPagamentosApiClient.gerarPagamento).toHaveBeenCalledWith(200);
+    expect(pedidoGatewayMock.adicionarPedidoCache).toHaveBeenCalledWith(pedido);
+  });
 
-      (clienteGatewayMock.adquirirPorID as jest.Mock).mockResolvedValue({ id: 'cliente123' });
-      (produtoGatewayMock.buscarProdutoPorID as jest.Mock).mockResolvedValue({ id: 'produto1', valor: 100 });
-      (cadastrarIntencaoPagamentoUseCaseMock.execute as jest.Mock).mockRejectedValue(
-        new Error('Falha ao criar intenção de pagamento'),
-      );
+  it('deve lançar erro quando a intenção de pagamento falhar', async () => {
 
-      await expect(cadastrarPedidoUseCase.execute(pedido, pedidoGateway)).rejects.toThrowError(
-        new HttpException('Falha ao criar intenção de pagamento', HttpStatus.BAD_REQUEST),
-      );
-    });
+    const pedido = { idCliente: 'cliente1', combo: [{ idProduto: 'produto1', quantidade: 2, valor: 50 } as ItemPedido], idPagamento: 'intencaoPagamento1'};
 
-    it('Deve salvar o pedido e adicionar ao cache com sucesso', async () => {
-      const pedido = new Pedido('cliente123', [{ idProduto: 'produto1', quantidade: 2, valor: 100 } as ItemPedido], 'intencaoPagamento123');
+    fiapClientesApiClient.adquirirPorID = jest.fn().mockResolvedValue({ id: 'cliente1' });
+    fiapProdutosApiClient.buscarProdutoPorID = jest.fn().mockResolvedValue({ id: 'produto1', valor: 50 });
+    fiapPagamentosApiClient.gerarPagamento = jest.fn().mockRejectedValue(new Error('Erro ao gerar pagamento'));
 
-      (clienteGatewayMock.adquirirPorID as jest.Mock).mockResolvedValue({ id: 'cliente123' });
-      (produtoGatewayMock.buscarProdutoPorID as jest.Mock).mockResolvedValue({ id: 'produto1', valor: 100 });
-      (cadastrarIntencaoPagamentoUseCaseMock.execute as jest.Mock).mockResolvedValue({
-        id: { toHexString: jest.fn().mockReturnValue('intencaoPagamento123') },
-      });
-
-      const pedidoSalvoMock = new Pedido('cliente123', [{ idProduto: 'produto1', quantidade: 2, valor: 100 } as ItemPedido], 'intencaoPagamento123');
-
-      (pedidoGateway.salvarPedido as jest.Mock).mockResolvedValue(pedidoSalvoMock);
-      (pedidoGateway.adicionarPedidoCache as jest.Mock).mockResolvedValue(undefined);
-
-      const resultado = await cadastrarPedidoUseCase.execute(pedido, pedidoGateway);
-
-      expect(pedidoGateway.salvarPedido).toHaveBeenCalled();
-      expect(pedidoGateway.adicionarPedidoCache).toHaveBeenCalled();
-      expect(resultado).toEqual(pedidoSalvoMock);
-    });
+    await expect(cadastrarPedidoUseCase.execute(pedido as PedidoDTO, pedidoGatewayMock))
+      .rejects
+      .toThrowError(new HttpException('Erro ao gerar pagamento', HttpStatus.INTERNAL_SERVER_ERROR));
   });
 });
