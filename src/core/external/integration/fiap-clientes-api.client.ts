@@ -1,3 +1,5 @@
+import { log } from "console";
+
 const axios = require('axios');
 
 const mock = (id) => {
@@ -15,6 +17,6 @@ export const fiapClientesApiClient = process.env.NODE_ENV === 'test' ? {
   adquirirPorID: mock
 }: {
   adquirirPorID: async (id) => {
-    return await axios.get(process.env.CLIENTES_ENDPOINT + '/clientes/' + id); 
+    return (await axios.get(process.env.CLIENTES_ENDPOINT + '/clientes/' + id)).data; 
   },
 });

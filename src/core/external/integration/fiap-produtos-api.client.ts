@@ -13,6 +13,6 @@ export const fiapProdutosApiClient = process.env.NODE_ENV === 'test' ? {
   buscarProdutoPorID: mock
 }: {
   buscarProdutoPorID: async (idProduto) => {
-    return await axios.get(process.env.PRODUTOS_ENDPOINT + '/produtos/' + idProduto); 
+    return (await axios.get(process.env.PRODUTOS_ENDPOINT + '/produtos/' + idProduto)).data; 
   },
 });

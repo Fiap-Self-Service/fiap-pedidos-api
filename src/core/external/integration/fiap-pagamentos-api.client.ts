@@ -16,10 +16,10 @@ export const fiapPagamentosApiClient =
           gerarPagamento: mock,
         }
       : {
-          gerarPagamento: async (valorTotal) => {
-            return await axios.post(
+          gerarPagamento: async (valor) => {
+            return (await axios.post(
               process.env.PAGAMENTOS_ENDPOINT + '/pagamentos/',
-              { valorTotal },
-            );
+              { valor },
+            )).data;
           },
         };
