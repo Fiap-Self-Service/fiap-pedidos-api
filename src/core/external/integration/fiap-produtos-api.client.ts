@@ -1,18 +1,13 @@
 const axios = require('axios');
 
-const mock = (idProduto) => {
-  if (idProduto === 'produto1') {
-    return { id: 'produto1', valor: 100 };
-  }
-  return null;
-};
-
-export const fiapProdutosApiClient = process.env.NODE_ENV === 'test' ? {
-  buscarProdutoPorID: jest.fn().mockImplementation(mock),
-} : (process.env.NODE_ENV === 'testcucumber' ? {
-  buscarProdutoPorID: mock
-}: {
+export const fiapProdutosApiClient = {
   buscarProdutoPorID: async (idProduto) => {
-    return (await axios.get(process.env.PRODUTOS_ENDPOINT + '/produtos/' + idProduto)).data; 
+    return (
+      await axios.get(
+        (process.env.PRODUTOS_ENDPOINT || 'http://fiap-produtos-api.com') +
+          '/produtos/' +
+          idProduto,
+      )
+    ).data;
   },
-});
+};

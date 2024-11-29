@@ -8,7 +8,7 @@ export const databaseProviders = [
   {
     provide: 'DATA_SOURCE',
     useFactory: async () => {
-      const isTestEnv = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testcucumber';
+      const isTestEnv = process.env.NODE_ENV === 'test';
       const dataSourceConfig: DataSourceOptions = isTestEnv
         ? {
             type: 'sqlite',

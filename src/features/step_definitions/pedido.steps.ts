@@ -7,6 +7,8 @@ import { AppModule } from '../../app.module';
 import { PedidoStatusType } from '../../core/entities/pedido-status-type.enum';
 import { log } from 'console';
 
+const nock = require('nock');
+
 let app: INestApplication;
 let pedidoDTO;
 let response: any;
@@ -17,6 +19,22 @@ const PEDIDO1 = {
 
 
 Before(async () => {
+  
+  // Simulando API Clientes
+  nock('http://fiap-clientes-api.com')
+    .get('/clientes/cliente123')
+    .reply(200, { id: 'cliente123', nome: 'Cliente Teste' });
+
+  // Simulando API Pagamentos
+  nock('http://fiap-pagamentos-api.com')
+    .post('/pagamentos')
+    .reply(201, { id: 'uuid' });
+
+  // Simulando API Produtos
+  nock('http://fiap-produtos-api.com')
+    .get('/produtos/produto1')
+    .reply(200, PEDIDO1.combo[0]);
+
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [AppModule],
   }).compile();
@@ -48,8 +66,6 @@ Given('que um pedido seja cadastrado com sucesso', async () => {
 Given('realizado a busca dos pedidos', async () => {
   response = await request(app.getHttpServer())
     .get('/pedidos/listarPedidos');
-
-    log(response);
 }); 
 
 When('o pedido for cadastrado', async () => {
