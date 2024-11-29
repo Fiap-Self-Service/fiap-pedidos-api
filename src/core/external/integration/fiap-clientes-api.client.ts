@@ -1,16 +1,20 @@
 const axios = require('axios');
 
-export const fiapClientesApiClient = process.env.NODE_ENV === 'test' ? { 
-  adquirirPorID: jest.fn().mockImplementation((id) => {
+const mock = (id) => {
     
-    if (id === 'cliente123') {
-      return { id: 'cliente123', nome: 'Cliente Teste' };
-    }
+  if (id === 'cliente123') {
+    return { id: 'cliente123', nome: 'Cliente Teste' };
+  }
 
-    return null;
-  }),
-} : {
+  return null;
+};
+
+export const fiapClientesApiClient = process.env.NODE_ENV === 'test' ? { 
+  adquirirPorID: jest.fn().mockImplementation(mock),
+} : (process.env.NODE_ENV === 'testcucumber' ? {
+  adquirirPorID: mock
+}: {
   adquirirPorID: async (id) => {
     return await axios.get(process.env.CLIENTES_ENDPOINT + '/clientes/' + id); 
   },
-};
+});
