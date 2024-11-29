@@ -7,19 +7,16 @@ const mock = (valor) => {
 };
 
 export const fiapPagamentosApiClient =
-  process.env.NODE_ENV === 'test'
+  process.env.NODE_ENV === 'testcucumber'
     ? {
-        gerarPagamento: jest.fn().mockImplementation(mock),
+        gerarPagamento: mock,
       }
-    : process.env.NODE_ENV === 'testcucumber'
-      ? {
-          gerarPagamento: mock,
-        }
-      : {
-          gerarPagamento: async (valor) => {
-            return (await axios.post(
-              process.env.PAGAMENTOS_ENDPOINT + '/pagamentos/',
-              { valor },
-            )).data;
-          },
-        };
+    : {
+        gerarPagamento: async (valor) => {
+          return (
+            await axios.post(process.env.PAGAMENTOS_ENDPOINT + '/pagamentos/', {
+              valor,
+            })
+          ).data;
+        },
+      };

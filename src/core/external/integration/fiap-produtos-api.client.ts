@@ -7,12 +7,10 @@ const mock = (idProduto) => {
   return null;
 };
 
-export const fiapProdutosApiClient = process.env.NODE_ENV === 'test' ? {
-  buscarProdutoPorID: jest.fn().mockImplementation(mock),
-} : (process.env.NODE_ENV === 'testcucumber' ? {
+export const fiapProdutosApiClient = process.env.NODE_ENV === 'testcucumber' ? {
   buscarProdutoPorID: mock
 }: {
   buscarProdutoPorID: async (idProduto) => {
     return (await axios.get(process.env.PRODUTOS_ENDPOINT + '/produtos/' + idProduto)).data; 
   },
-});
+};
