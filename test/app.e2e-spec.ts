@@ -3,6 +3,8 @@ import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';  // Ajuste o caminho conforme necessário
 
+const nock = require('nock');
+
 describe('Testes de Integração de Pedido', () => {
   let app: INestApplication;
   let pedidoId: string;
@@ -20,6 +22,22 @@ describe('Testes de Integração de Pedido', () => {
   };
 
   beforeAll(async () => {
+    
+    // Simulando API Clientes
+    nock('http://fiap-clientes-api.com')
+      .get('/clientes/cliente123')
+      .reply(200, { id: 'cliente123', nome: 'Cliente Teste' });
+
+    // Simulando API Pagamentos
+    nock('http://fiap-pagamentos-api.com')
+      .post('/pagamentos')
+      .reply(201, { id: 'uuid' });
+
+    // Simulando API Produtos
+    nock('http://fiap-produtos-api.com')
+      .get('/produtos/produto1')
+      .reply(200, { id: 'produto1', valor: 100 });
+
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -62,6 +80,7 @@ describe('Testes de Integração de Pedido', () => {
   });
 
   afterAll(async () => {
+    nock.cleanAll();
     await app.close();
   });
 });
