@@ -19,6 +19,7 @@ describe('PedidoGateway', () => {
       buscarPorIdPedido: jest.fn(),
       buscarPorIdPagamento: jest.fn(),
       atualizarStatusPedido: jest.fn(),
+      atualizarStatusPedidoPorIdPagamento: jest.fn(),
     } as unknown as IPedidoRepository;
 
     pedidoCacheRepositoryMock = {
@@ -112,6 +113,22 @@ describe('PedidoGateway', () => {
 
       expect(result).toEqual(pedido);
       expect(pedidoRepositoryMock.atualizarStatusPedido).toHaveBeenCalledWith('pedido123', atualizarPedidoDTO);
+    });
+  });
+
+  describe('atualizarStatusPedidoPorIdPagamento', () => {
+    it('deve atualizar o status de um pedido pelo Id de Pagamento', async () => {
+      const atualizarPedidoDTO: AtualizarPedidoDTO = { status: 'FINALIZADO' };
+      const pedido = new Pedido('cliente1', [
+        { idProduto: 'produto1', quantidade: 1, valor: 100 } as ItemPedido,
+        { idProduto: 'produto2', quantidade: 2, valor: 50 } as ItemPedido
+      ], 'pagamento123');
+      (pedidoRepositoryMock.atualizarStatusPedidoPorIdPagamento as jest.Mock).mockResolvedValue(pedido);
+
+      const result = await pedidoGateway.atualizarStatusPedidoWebhook('id-pagamento', atualizarPedidoDTO);
+
+      expect(result).toEqual(pedido);
+      expect(pedidoRepositoryMock.atualizarStatusPedidoPorIdPagamento).toHaveBeenCalledWith('id-pagamento', atualizarPedidoDTO);
     });
   });
 
