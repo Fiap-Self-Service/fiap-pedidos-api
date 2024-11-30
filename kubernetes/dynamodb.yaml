@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dynamo-deployment
+  labels:
+    app: dynamo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dynamo
+  template:
+    metadata:
+      labels:
+        app: dynamo
+    spec:
+      containers:
+        - name: dynamo
+          image: amazon/dynamodb-local
+          ports:
+            - containerPort: 8000
+          env:  # Change from `environment` to `env`
+            - name: AWS_REGION
+              value: us-east-1
+            - name: AWS_ACCESS_KEY_ID
+              value: dummy
+            - name: AWS_SECRET_ACCESS_KEY
+              value: dummy
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Xmx2048m -Xms2048m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: dynamo-service
+spec:
+  selector:
+    app: dynamo
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: LoadBalancer
