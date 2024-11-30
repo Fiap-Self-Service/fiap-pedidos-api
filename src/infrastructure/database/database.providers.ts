@@ -32,7 +32,7 @@ export const databaseProviders = [
     },
   },
   {
-    provide: 'CACHE_DATA_SOURCE',
+    provide: 'DYNAMODB_CLIENT',
     useFactory: async () => {
       const dynamoDBConfig = new DynamoDB.DocumentClient({
         region: process.env.DYNAMODB_REGION || 'us-east-1',

@@ -50,20 +50,6 @@ import { AtualizarStatusPedidoWebhookController } from './core/adapters/controll
     ListarPedidosAtivosController,
     CadastrarPedidoController,
 
-    // External repositories
-    {
-      provide: 'DYNAMODB_CLIENT',
-      useFactory: () => {
-        return new DynamoDB.DocumentClient({
-          region: 'us-east-1',
-          endpoint: 'http://localhost:8000',
-          credentials: {
-            accessKeyId: 'dummy',  // Credenciais fictícias
-            secretAccessKey: 'dummy'
-          }
-        });
-      },
-    },
     {
       provide: IPedidoRepository,
       useClass: PedidoRepository,
