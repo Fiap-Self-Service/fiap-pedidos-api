@@ -1,38 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fiap-clientes-api-deployment
-  namespace: fiap-clientes-api
+  name: fiap-pedidos-api-deployment
+  namespace: fiap-pedidos-api
   labels:
-    app: fiap-clientes-api
+    app: fiap-pedidos-api
 spec:
   template:
     metadata:
-      name: fiap-clientes-api-deployment
+      name: fiap-pedidos-api-deployment
       labels:
-        app: fiap-clientes-api-deployment
+        app: fiap-pedidos-api-deployment
     spec:
       containers:
-        - name: fiap-clientes-api-deployment-container
-          image: jacksoncarbonera/fiap-clientes-api
+        - name: fiap-pedidos-api-deployment-container
+          image: jacksoncarbonera/fiap-pedidos-api
           ports:
-            - containerPort: 3000
+            - containerPort: 3002
           envFrom:
           - configMapRef:
-              name: fiap-clientes-api-config 
+              name: fiap-pedidos-api-config 
           - secretRef:
-             name: fiap-clientes-api-secret
+             name: fiap-pedidos-api-secret
           livenessProbe:
             httpGet:
               path: /health
-              port: 3000
+              port: 3002
             periodSeconds: 10
             failureThreshold: 3
             initialDelaySeconds: 20
           readinessProbe:
             httpGet:
               path: /health
-              port: 3000
+              port: 3002
             periodSeconds: 10
             failureThreshold: 5
             initialDelaySeconds: 3
@@ -46,4 +46,4 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: fiap-clientes-api-deployment
+      app: fiap-pedidos-api-deployment
