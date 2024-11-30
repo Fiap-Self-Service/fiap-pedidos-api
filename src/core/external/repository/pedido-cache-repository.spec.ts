@@ -63,7 +63,7 @@ describe('PedidoCacheRepository', () => {
       } as any);
 
       await expect(pedidoCacheRepository.adicionarPedidoCache(mockPedido)).rejects.toThrow(
-        `Não foi possível adicionar o pedido ao cache: ${mockError.message}`
+        `Não foi possível adicionar o pedido ao cache: ${mockError}`
       );
     });
   });
