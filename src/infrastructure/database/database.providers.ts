@@ -34,35 +34,22 @@ export const databaseProviders = [
   {
     provide: 'CACHE_DATA_SOURCE',
     useFactory: async () => {
-      const isDynamoDBLocal = !process.env.DYNAMODB_ENDPOINT || process.env.DYNAMODB_ENDPOINT === 'http://localhost:8000';
       const dynamoDBConfig = new DynamoDB.DocumentClient({
         region: process.env.DYNAMODB_REGION || 'us-east-1',
         endpoint: process.env.DYNAMODB_ENDPOINT || (process.env.NODE_ENV === 'test' ? 'http://localhost:8000' : null),
-        credentials: isDynamoDBLocal
-          ? {
+        credentials: {
               accessKeyId: 'dummy',
               secretAccessKey: 'dummy', 
             }
-          : {
-              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-              sessionToken: process.env.AWS_SESSION_TOKEN,
-            },
       });
 
       const dynamoDB = new DynamoDB({
         region: process.env.DYNAMODB_REGION || 'us-east-1',
         endpoint: process.env.DYNAMODB_ENDPOINT || (process.env.NODE_ENV === 'test' ? 'http://localhost:8000' : null),
-        credentials: isDynamoDBLocal
-          ? {
+        credentials: {
               accessKeyId: 'dummy',
               secretAccessKey: 'dummy',
             }
-          : {
-              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-              sessionToken: process.env.AWS_SESSION_TOKEN,
-            },
       });
 
       // Função para criar a tabela, caso não exista
