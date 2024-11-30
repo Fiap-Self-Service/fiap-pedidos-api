@@ -32,7 +32,7 @@ export class PedidoCacheRepository implements IPedidoCacheRepository {
     try {
       await this.pedidoCacheRepo.put(params).promise();
     } catch (error) {
-      throw new Error(`Não foi possível adicionar o pedido ao cache: ${error.message}`);
+      throw new Error(`Não foi possível adicionar o pedido ao cache: ${error}`);
     }
   }
 
