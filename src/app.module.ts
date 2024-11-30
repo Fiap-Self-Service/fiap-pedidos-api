@@ -24,6 +24,8 @@ import { DatabaseModule } from './infrastructure/database/database.module';
 import { PedidoAPIController } from './core/external/api/pedido-api.controller';
 import { IPedidoCacheRepository } from './core/external/repository/pedido-cache-repository.interface';
 import { ItemPedidoEntity } from './core/external/repository/itemPedido.entity';
+import { AtualizarStatusPedidoWebhookUseCase } from './core/use-cases/atualizar-status-pedido-webhook-use-case';
+import { AtualizarStatusPedidoWebhookController } from './core/adapters/controllers/atualizar-status-pedido-webhook-controller';
 
 @Module({
   providers: [
@@ -33,6 +35,7 @@ import { ItemPedidoEntity } from './core/external/repository/itemPedido.entity';
     // Use cases
     CadastrarPedidoUseCase,
     AtualizarStatusPedidoUseCase,
+    AtualizarStatusPedidoWebhookUseCase,
     ConsultarPedidoPorIdUseCase,
     ListarPedidoUseCase,
     ListarPedidoPorIdClienteUseCase,
@@ -41,6 +44,7 @@ import { ItemPedidoEntity } from './core/external/repository/itemPedido.entity';
     // controllers
     ConsultarPedidoPorIdController,
     AtualizarStatusPedidoController,
+    AtualizarStatusPedidoWebhookController,
     ListarPedidoController,
     ListarPedidoPorIdClienteController,
     ListarPedidosAtivosController,

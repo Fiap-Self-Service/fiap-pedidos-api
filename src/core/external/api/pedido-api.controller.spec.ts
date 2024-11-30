@@ -8,6 +8,7 @@ import { AtualizarStatusPedidoController } from '../../adapters/controllers/atua
 import { ListarPedidosAtivosController } from '../../adapters/controllers/listar-pedidos-ativos-controller';
 import { PedidoDTO } from '../../dto/pedidoDTO';
 import { AtualizarPedidoDTO } from '../../dto/atualizarStatusPedidoDTO';
+import { AtualizarStatusPedidoWebhookController } from '../../adapters/controllers/atualizar-status-pedido-webhook-controller';
 
 describe('PedidoAPIController', () => {
   let controller: PedidoAPIController;
@@ -18,6 +19,7 @@ describe('PedidoAPIController', () => {
   let listarPedidosAtivosControllerMock: jest.Mocked<ListarPedidosAtivosController>;
   let listarPedidoPorIdClienteControllerMock: jest.Mocked<ListarPedidoPorIdClienteController>;
   let atualizarStatusPedidoControllerMock: jest.Mocked<AtualizarStatusPedidoController>;
+  let atualizarStatusPedidoWebhookControllerMock: jest.Mocked<AtualizarStatusPedidoWebhookController>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,6 +31,7 @@ describe('PedidoAPIController', () => {
         { provide: ListarPedidosAtivosController, useValue: { execute: jest.fn() } },
         { provide: ListarPedidoPorIdClienteController, useValue: { execute: jest.fn() } },
         { provide: AtualizarStatusPedidoController, useValue: { execute: jest.fn() } },
+        { provide: AtualizarStatusPedidoWebhookController, useValue: { execute: jest.fn() } }
       ],
     }).compile();
 
@@ -40,6 +43,8 @@ describe('PedidoAPIController', () => {
     listarPedidosAtivosControllerMock = module.get(ListarPedidosAtivosController);
     listarPedidoPorIdClienteControllerMock = module.get(ListarPedidoPorIdClienteController);
     atualizarStatusPedidoControllerMock = module.get(AtualizarStatusPedidoController);
+    atualizarStatusPedidoWebhookControllerMock = module.get(AtualizarStatusPedidoWebhookController);
+
   });
 
   it('should be defined', () => {
@@ -262,6 +267,46 @@ describe('PedidoAPIController', () => {
 
       expect(atualizarStatusPedidoControllerMock.execute).toHaveBeenCalledWith(
         '789',
+        atualizarPedidoDTO,
+      );
+      expect(result).toEqual(pedidoAtualizado);
+    });
+  });
+
+  describe('atualizarStatusPedidoWebhook', () => {
+    it('should call atualizarStatusPedidoController and return the result', async () => {
+      const atualizarPedidoDTO: AtualizarPedidoDTO = { status: 'RECEBIDO' };
+      const pedidoAtualizado: PedidoDTO = {
+        id: null,
+        idPagamento: '123',
+        idCliente: '123456',
+        valorTotal: 100,
+        dataCriacao: new Date(),
+        status: 'PRONTO',
+        combo: [
+          {
+            id: null,
+            idPedido: null,
+            idProduto: '111',
+            quantidade: 1,
+            valor: 50,
+          },
+          {
+            id: null, 
+            idPedido: null, 
+            idProduto: '222', 
+            quantidade: 2, 
+            valor: 25, 
+          },
+        ],
+      };
+
+      atualizarStatusPedidoWebhookControllerMock.execute.mockResolvedValue(pedidoAtualizado);
+
+      const result = await controller.atualizarStatusPedidoWebhook('123', atualizarPedidoDTO);
+
+      expect(atualizarStatusPedidoWebhookControllerMock.execute).toHaveBeenCalledWith(
+        '123',
         atualizarPedidoDTO,
       );
       expect(result).toEqual(pedidoAtualizado);

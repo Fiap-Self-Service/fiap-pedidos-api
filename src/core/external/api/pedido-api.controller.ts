@@ -8,6 +8,7 @@ import { AtualizarStatusPedidoController } from '../../adapters/controllers/atua
 import { PedidoDTO } from '../../dto/pedidoDTO';
 import { AtualizarPedidoDTO } from '../../dto/atualizarStatusPedidoDTO';
 import { ListarPedidosAtivosController } from "../../adapters/controllers/listar-pedidos-ativos-controller";
+import { AtualizarStatusPedidoWebhookController } from '../../adapters/controllers/atualizar-status-pedido-webhook-controller';
 
 @ApiTags('Pedidos')
 @Controller('pedidos')
@@ -19,6 +20,7 @@ export class PedidoAPIController {
         private readonly listarPedidosAtivosController: ListarPedidosAtivosController,
         private readonly listarPedidoPorIdClienteController: ListarPedidoPorIdClienteController,
         private readonly atualizarStatusPedidoController: AtualizarStatusPedidoController,
+        private readonly atualizarStatusPedidoWebhookController: AtualizarStatusPedidoWebhookController,
     ) {}
 
     @Post()
@@ -92,5 +94,18 @@ export class PedidoAPIController {
         @Param('id') id: string, @Body() atualizarStatusPedido: AtualizarPedidoDTO
     ): Promise<PedidoDTO> {
         return await this.atualizarStatusPedidoController.execute(id, atualizarStatusPedido);
+    }
+
+    @Patch('/webhook/pagamento/:id')
+    @ApiOperation({
+        summary: 'Atualizar Status de Pedido',
+        description:
+            'Atualiza apenas status do pedido, os status possíveis são [RECEBIDO, PREPARACAO, PRONTO, FINALIZADO]'
+    })
+    @ApiResponse({ status: 201, description: 'Status do pedido atualizado com sucesso.'})
+    async atualizarStatusPedidoWebhook(
+        @Param('id') id: string, @Body() atualizarStatusPedido: AtualizarPedidoDTO
+    ): Promise<PedidoDTO> {
+        return await this.atualizarStatusPedidoWebhookController.execute(id, atualizarStatusPedido);
     }
 }
