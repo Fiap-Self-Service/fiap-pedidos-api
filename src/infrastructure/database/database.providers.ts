@@ -52,7 +52,7 @@ export const databaseProviders = [
 
       const dynamoDB = new DynamoDB({
         region: process.env.DYNAMODB_REGION || 'us-east-1',
-        endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
+        endpoint: process.env.DYNAMODB_ENDPOINT || (process.env.NODE_ENV === 'test' ? 'http://localhost:8000' : null),
         credentials: isDynamoDBLocal
           ? {
               accessKeyId: 'dummy',
