@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fiap-pedidos-api-config
+  namespace: fiap-pedidos-api
+  labels:
+    name: fiap-pedidos-api-config
+data:
+  DATABASE_HOST: "terraform-20241130112944620700000004.cqkwnkbplfjh.us-east-1.rds.amazonaws.com"
+  DATABASE_PORT: "3306"
+  DATABASE_DATABASE: "pedidos"
+  APPLICATION_PORT: "3002"
+  AWS_REGION: us-east-1
+  DYNAMODB_REGION: us-east-1
+  CLIENTES_ENDPOINT: http://172.20.15.101:3000
+  PRODUTOS_ENDPOINT: http://172.20.15.208:3001
+  PAGAMENTOS_ENDPOINT: http://172.20.230.244:3003
